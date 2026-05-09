@@ -1,7 +1,6 @@
-import { db, storage, auth } from '../js/firebase-config.js';
+import { db, auth } from '../js/firebase-config.js';
 import { productos } from '../js/productos.js';
-import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Check Authentication
@@ -66,12 +65,37 @@ function renderAdminProduct(id, product) {
             <p>${product.category} | ${product.price}</p>
         </div>
         <div class="item-actions">
-            <button class="btn-delete" onclick="deleteProduct('${id}', '${product.imagePath || ''}')">
+            <button class="btn-delete" onclick="deleteProduct('${id}')">
                 <i class="fas fa-trash"></i>
             </button>
         </div>
     `;
     productList.appendChild(div);
+}
+
+// Helper: Compress and Convert to Base64
+async function processImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600; // Reducimos tamaño para ahorrar espacio
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // Calidad 0.7 para comprimir bien
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
+            };
+        };
+    });
 }
 
 // Handle Form Submission
@@ -90,13 +114,8 @@ productForm.addEventListener('submit', async (e) => {
 
     try {
         let imageUrl = '';
-        let imagePath = '';
-
         if (imageFile) {
-            imagePath = `products/${Date.now()}_${imageFile.name}`;
-            const storageRef = ref(storage, imagePath);
-            await uploadBytes(storageRef, imageFile);
-            imageUrl = await getDownloadURL(storageRef);
+            imageUrl = await processImage(imageFile);
         }
 
         await addDoc(collection(db, "productos"), {
@@ -104,7 +123,6 @@ productForm.addEventListener('submit', async (e) => {
             price,
             category,
             image: imageUrl,
-            imagePath: imagePath,
             createdAt: serverTimestamp()
         });
 
@@ -113,8 +131,8 @@ productForm.addEventListener('submit', async (e) => {
         fileText.innerText = 'Seleccionar imagen...';
         alert('Producto guardado con éxito');
     } catch (error) {
-        console.error("Error al guardar:", error);
-        alert('Error al guardar el producto: ' + error.message);
+        console.error("Error:", error);
+        alert('Error al guardar: ' + error.message);
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -122,17 +140,13 @@ productForm.addEventListener('submit', async (e) => {
 });
 
 // Delete Product
-window.deleteProduct = async (id, imagePath) => {
+window.deleteProduct = async (id) => {
     if (confirm('¿Estás seguro de eliminar este producto?')) {
         try {
             await deleteDoc(doc(db, "productos", id));
-            if (imagePath) {
-                const imageRef = ref(storage, imagePath);
-                await deleteObject(imageRef).catch(err => console.log("La imagen ya no existía en Storage"));
-            }
         } catch (error) {
-            console.error("Error al eliminar:", error);
-            alert("Error al eliminar el producto");
+            console.error("Error:", error);
+            alert("Error al eliminar");
         }
     }
 };
@@ -140,7 +154,7 @@ window.deleteProduct = async (id, imagePath) => {
 // Migration Logic
 if (migrateBtn) {
     migrateBtn.addEventListener('click', async () => {
-        if (confirm('¿Quieres migrar los productos actuales a la base de datos en la nube?')) {
+        if (confirm('¿Quieres migrar los productos actuales?')) {
             migrateBtn.disabled = true;
             migrateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Migrando...';
             try {
@@ -154,7 +168,7 @@ if (migrateBtn) {
                         createdAt: serverTimestamp()
                     });
                 }
-                alert('¡Migración exitosa! Ya puedes borrar el archivo productos.js si deseas.');
+                alert('¡Migración exitosa!');
                 migrateBtn.style.display = 'none';
             } catch (error) {
                 console.error(error);
