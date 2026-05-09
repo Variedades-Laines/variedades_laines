@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Variedades Laines</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="admin-body">
+    <header class="admin-header">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-tools"></i> Panel <span>Administrativo</span>
+            </div>
+            <div class="admin-nav-actions">
+                <button id="migrate-btn" class="btn btn-outline" style="padding: 5px 15px; font-size: 0.8rem; margin-right: 10px;">
+                    <i class="fas fa-file-import"></i> Migrar Datos
+                </button>
+                <a href="../index.html" class="nav-btn"><i class="fas fa-eye"></i> Ver Tienda</a>
+                <button id="logout-btn" class="btn btn-outline" style="padding: 5px 15px; font-size: 0.8rem; border-color: #ff4d4d; color: #ff4d4d; margin-left: 10px;">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container admin-container">
+        <section class="admin-section">
+            <div class="section-title">
+                <h2>Gestionar Productos</h2>
+                <p>Agrega, edita o elimina productos de tu catálogo en tiempo real.</p>
+            </div>
+
+            <div class="admin-grid">
+                <!-- Formulario -->
+                <div class="admin-card form-card">
+                    <h3><i class="fas fa-plus-circle"></i> Nuevo Producto</h3>
+                    <form id="product-form">
+                        <div class="form-group">
+                            <label for="title">Nombre del Producto</label>
+                            <input type="text" id="title" required placeholder="Ej: Shampoo Karseell">
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Precio (con C$)</label>
+                            <input type="text" id="price" required placeholder="Ej: C$ 1,200">
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Categoría</label>
+                            <select id="category" required>
+                                <option value="hogar">Hogar</option>
+                                <option value="tecnologia">Tecnología</option>
+                                <option value="moda">Moda</option>
+                                <option value="cuidado">Cuidado Personal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="image">Imagen del Producto</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="image" accept="image/*" required>
+                                <div class="file-dummy">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span class="file-text">Seleccionar imagen...</span>
+                                </div>
+                            </div>
+                            <div id="image-preview" class="image-preview"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            <i class="fas fa-save"></i> Guardar Producto
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lista de Productos -->
+                <div class="admin-card list-card">
+                    <h3><i class="fas fa-list"></i> Inventario Actual</h3>
+                    <div id="admin-product-list" class="admin-product-list">
+                        <!-- Cargando... -->
+                        <div class="loader">Cargando productos...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
